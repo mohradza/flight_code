@@ -1,0 +1,20 @@
+<launch>
+  
+  <!-- Start the camera node -->
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+    <param name="video_device" value="/dev/video0" />
+    <param name="image_width" value="320" />
+    <param name="image_height" value="240" />
+    <param name="pixel_format" value="yuyv" />
+    <param name="camera_frame_id" value="usb_cam" />
+    <param name="io_method" value="mmap"/>
+    <param name="framerate" value="30"/>
+  </node>
+  
+  <!-- Start the optic flow node -->
+  <node pkg="optic_flow_code" type="optic_flow_process_node_viewer.py" name="OF_node" output="screen" />
+
+  <!-- Start recording with Rosbag -->
+<!--  <node pkg="rosbag" type="record" name="rosbag_OF_data"
+        args=" -O /tmp/rosbag_OF_data /optic_flow/optic_flow " /> -->
+</launch>

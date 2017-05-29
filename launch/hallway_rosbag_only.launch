@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="rosbag" type="record" name="rosbag_OF_data"
+        args=" -O /tmp/rosbag_OF_data1 /optic_flow/optic_flow /optic_flow/fourier_coefs " />
+  <node pkg="rosbag" type="record" name="rosbag_flight_data"
+        args=" -O /tmp/rosbag_flight_data1  /mavros/mocap/pose /mavros/rc/in /controller_out/yaw_rate_cmd " />
+
+</launch>

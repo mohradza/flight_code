@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_data"
+              args="-O /tmp/ros_sysid /mavros/rc/in /mavros/local_position/pose /mavros/local_position/velocity /mavros/mocap/pose /mavros/actuator_control"
+    />
+
+</launch>

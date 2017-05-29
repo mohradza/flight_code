@@ -1,0 +1,9 @@
+<launch>
+  
+  <!-- Start the VRPN Client -->
+  <include file="/opt/ros/kinetic/share/vrpn_client_ros/launch/OF_F330.launch"/>
+
+  <!-- Start coms to PixHawk via Mavros -->
+  <include file="/opt/ros/kinetic/share/mavros/launch/px4.launch"/>
+
+</launch>

@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="rosbag" type="record" name="rosbag_data"
+              args="-o /tmp/rosbag /optic_flow/optic_flow"
+    />
+
+</launch>
