@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(offboard_flight)
+project(flight_code)
 
 
 find_package(catkin REQUIRED COMPONENTS
