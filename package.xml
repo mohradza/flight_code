@@ -4,6 +4,7 @@
   <version>0.0.0</version>
   <description>The AutonomousFlight package</description>
   <maintainer email="mioh0887@colorado.edu">Mike</maintainer>
+  <license>TODO</license>
   <!-- The *_depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
   <!-- Examples: -->
