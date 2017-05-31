@@ -321,6 +321,10 @@ int main(int argc, char **argv)
                 ROS_INFO("Holding current position");
                 setpoint_type = setpoint_pose;
                 pose = current_pose;
+                pose.pose.orientation.x = 0.0;
+                pose.pose.orientation.y = 0.0;
+                pose.pose.orientation.z = 0.0;
+                pose.pose.orientation.w = -1.0;
                 pose.header.stamp = ros::Time::now();
                 man5 = true;
                 last_request = ros::Time::now();
