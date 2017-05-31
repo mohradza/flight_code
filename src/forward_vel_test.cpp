@@ -105,7 +105,7 @@ int main(int argc, char **argv)
     takeoff_pose.pose.orientation.x = 0.0;
     takeoff_pose.pose.orientation.y = 0.0;
     takeoff_pose.pose.orientation.z = 0.0;
-    takeoff_pose.pose.orientation.w = 1.0;
+    takeoff_pose.pose.orientation.w = -1.0;
 
     landing_pose = takeoff_pose;
     landing_pose.pose.position.z = home_pose.pose.position.z - .015;

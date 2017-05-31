@@ -33,5 +33,5 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 #add_executable(RC_sysID src/sys_ID_test.cpp)
 #target_link_libraries(RC_sysID ${catkin_LIBRARIES})
 
-add_executable(offb_hallway src/offb.cpp)
-target_link_libraries(offb_hallway ${catkin_LIBRARIES})
+add_executable(forward_vel_test src/forward_vel_test.cpp)
+target_link_libraries(forward_vel_test ${catkin_LIBRARIES})
