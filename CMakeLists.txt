@@ -33,5 +33,5 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 #add_executable(RC_sysID src/sys_ID_test.cpp)
 #target_link_libraries(RC_sysID ${catkin_LIBRARIES})
 
-add_executable(forward_vel_test src/forward_vel_test.cpp)
+add_executable(forward_vel_test src/main_flight_controller.cpp)
 target_link_libraries(forward_vel_test ${catkin_LIBRARIES})
