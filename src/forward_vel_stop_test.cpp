@@ -8,17 +8,12 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
-#include <std_msgs/Float32.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/RCIn.h>
-#include <flight_code/YawRateCmdMsg.h>
-#include <Eigen/Geometry>
-#include <math.h>
-
 
 // State Callback
 mavros_msgs::State current_state;
@@ -27,31 +22,9 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
 }
 
 // Pose Calback
-std_msgs::Float32 yaw;
 geometry_msgs::PoseStamped current_pose;
 void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     current_pose = *msg;
-    double x = current_pose.pose.orientation.x;
-    double y = current_pose.pose.orientation.y;
-    double z = current_pose.pose.orientation.z;
-    double w = current_pose.pose.orientation.w;
-    double ysqr = y * y;
-
-	// roll (x-axis rotation)
-	//double t0 = +2.0 * (q.w() * q.x() + q.y() * q.z());
-	//double t1 = +1.0 - 2.0 * (q.x() * q.x() + ysqr);
-	//roll = std::atan2(t0, t1);
-
-	// pitch (y-axis rotation)
-	//double t2 = +2.0 * (q.w() * q.y() - q.z() * q.x());
-	//t2 = t2 > 1.0 ? 1.0 : t2;
-	//t2 = t2 < -1.0 ? -1.0 : t2;
-	//pitch = std::asin(t2);
-
-	// yaw (z-axis rotation)
-    double t3 = +2.0 * (w * z + x * y);
-    double t4 = +1.0 - 2.0 * (ysqr + z * z);  
-    yaw.data = std::atan2(t3, t4);
 }
 
 // RCin callback
@@ -62,12 +35,6 @@ void RCin_cb(const mavros_msgs::RCIn::ConstPtr& msg){
     for(int i = 0; i < 12; i++){
         Arr[i] = msg->channels[i];
     }
-}
-
-// Yaw rate command callback
-flight_code::YawRateCmdMsg yaw_cmd;
-void yaw_cmd_cb(const flight_code::YawRateCmdMsg::ConstPtr& msg){
-    yaw_cmd  = *msg;
 }
 
 int main(int argc, char **argv)
@@ -82,17 +49,13 @@ int main(int argc, char **argv)
             ("mavros/local_position/pose", 10, pose_cb);
     ros::Subscriber RC_in_sub = nh.subscribe<mavros_msgs::RCIn>
             ("/mavros/rc/in", 10, RCin_cb);
-    ros::Subscriber yaw_cmd_sub = nh.subscribe<flight_code::YawRateCmdMsg>
-            ("/controller_out/yaw_rate_cmd", 10, yaw_cmd_cb);
 
     // Publishers
     ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
             ("mavros/setpoint_position/local", 10);
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>
             ("mavros/setpoint_velocity/cmd_vel", 10);
-    ros::Publisher yaw_angle_pub = nh.advertise<std_msgs::Float32>
-            ("yaw_out",10);
-    
+
     // Service Clients
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>
             ("mavros/cmd/arming");
@@ -123,7 +86,7 @@ int main(int argc, char **argv)
     takeoff_pose.pose.orientation.w = -1.0;
 
     landing_pose = takeoff_pose;
-    landing_pose.pose.position.z = home_pose.pose.position.z - .1;
+    landing_pose.pose.position.z = home_pose.pose.position.z - .015;
 
     // Create velocity commands
     geometry_msgs::TwistStamped velocity;
@@ -136,9 +99,7 @@ int main(int argc, char **argv)
 
     geometry_msgs::TwistStamped vel_pos_x;
     vel_pos_x = velocity;
-    vel_pos_x.twist.linear.x = 1;
-    std_msgs::Float32 v;
-    v.data = 1.0;
+    vel_pos_x.twist.linear.x = 0.5;
 
     geometry_msgs::TwistStamped vel_neg_x;
     vel_neg_x = velocity;
@@ -261,7 +222,7 @@ int main(int argc, char **argv)
         
         // Takeoff
         if(flight_ready && !man1){
-            if(ros::Time::now() - last_request < ros::Duration(1.0)){
+            if(ros::Time::now() - last_request < ros::Duration(2.0)){
                 pose.header.stamp = ros::Time::now();
             } else {
                 ROS_INFO("Moving to takeoff");
@@ -321,7 +282,7 @@ int main(int argc, char **argv)
             if(ros::Time::now() - last_request < ros::Duration(1.0)){
                 velocity.header.stamp = ros::Time::now();
             } else {
-                ROS_INFO("Velocity Maneuver: Positive Velocity .5 m/s");
+                ROS_INFO("Velocity Maneuver: Positive Velocity .2 m/s");
                 velocity = vel_pos_x;
                 velocity.header.stamp = ros::Time::now();
                 man3 = true;
@@ -332,7 +293,7 @@ int main(int argc, char **argv)
         // Move forward for 10 seconds
         if(man3 && !man4){
             // Continue forward motion until safety limits are reached
-            if(current_pose.pose.position.x > 1){
+            if(current_pose.pose.position.x > .5){
                 safety_switch = true;
             }
          
@@ -389,16 +350,7 @@ int main(int argc, char **argv)
                 last_request = ros::Time::now();
             }
         }
-        
-        // If we are moving forward, start publishing yaw commands
-        if (Dswitch){
-            velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
-            velocity.twist.linear.x = v.data*cos(yaw.data);
-            velocity.twist.linear.y = v.data*sin(yaw.data);
-        }
 
-        //yaw_angle_pub.publish(yaw);
-        
         // Publish setpoints and record status for MATLAB        
         if(setpoint_type == setpoint_pose){
             local_pos_pub.publish(pose);

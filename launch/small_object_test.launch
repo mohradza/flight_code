@@ -18,7 +18,7 @@
   </node>
   
   <!-- Start the optic flow node -->
-  <node pkg="optic_flow_code" type="optic_flow_process_flip.py" name="OF_node" output="screen" />
+  <node pkg="small_object" type="OF_controller.py" name="OF_node" output="screen" />
 
   <!-- Start recording with Rosbag 
   <node pkg="rosbag" type="record" name="rosbag_OF_data"

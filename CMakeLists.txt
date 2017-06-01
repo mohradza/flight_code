@@ -8,10 +8,15 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  message_runtime
 )
 
-## Declare a catkin package
-catkin_package()
+add_message_files(DIRECTORY msg 
+                  FILES YawRateCmdMsg.msg)
+
+generate_messages(DEPENDENCIES std_msgs)
+
+catkin_package(CATKIN_DEPENDS message_runtime std_msgs)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
