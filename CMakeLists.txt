@@ -12,7 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 add_message_files(DIRECTORY msg 
-                  FILES YawRateCmdMsg.msg)
+                  FILES 
+                  YawRateCmdMsg.msg
+                  ControllerOutMsg.msg)
 
 generate_messages(DEPENDENCIES std_msgs)
 
@@ -40,3 +42,6 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(forward_vel_test src/main_flight_controller.cpp)
 target_link_libraries(forward_vel_test ${catkin_LIBRARIES})
+
+add_executable(takeoff_test src/arb_takeoff_test.cpp)
+target_link_libraries(takeoff_test ${catkin_LIBRARIES})
