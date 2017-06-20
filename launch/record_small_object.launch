@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="rosbag" type="record" name="rosbag_flight_data"
+        args=" -O /tmp/rosbag_flight_data1  /mavros/mocap/pose /mavros/local_position/pose /mavros/local_position/velocity /controller_out /yaw_out " />
+
+</launch>
