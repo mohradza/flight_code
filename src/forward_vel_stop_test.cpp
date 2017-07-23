@@ -74,22 +74,32 @@ int main(int argc, char **argv)
     geometry_msgs::PoseStamped home_pose;
     geometry_msgs::PoseStamped takeoff_pose;
     geometry_msgs::PoseStamped landing_pose;
+    
+    home_pose.pose.position.x = -2.5;
+    home_pose.pose.position.y = 0.0;
+    home_pose.pose.position.z = 0.10;
+    home_pose.pose.orientation.x = 0.0;
+    home_pose.pose.orientation.y = 0.0;
+    home_pose.pose.orientation.z = 0.0;
+    home_pose.pose.orientation.w = 1.0;
 
-    // Set the home and takeoff pose
-    home_pose = current_pose;
- 
-    takeoff_pose = home_pose;
-    takeoff_pose.pose.position.z = .7;
+    landing_pose = current_pose;
+    landing_pose.pose.position.z = home_pose.pose.position.z - .05;
+
+    takeoff_pose.pose.position.x = -2.5;
+    takeoff_pose.pose.position.y = 0.0;
+    takeoff_pose.pose.position.z = 1.0;
     takeoff_pose.pose.orientation.x = 0.0;
     takeoff_pose.pose.orientation.y = 0.0;
     takeoff_pose.pose.orientation.z = 0.0;
-    takeoff_pose.pose.orientation.w = -1.0;
+    takeoff_pose.pose.orientation.w = 1.0;
 
     landing_pose = takeoff_pose;
     landing_pose.pose.position.z = home_pose.pose.position.z - .015;
 
     // Create velocity commands
     geometry_msgs::TwistStamped velocity;
+
     velocity.twist.linear.x = 0.0;
     velocity.twist.linear.y = 0.0;
     velocity.twist.linear.z = 0.0;
@@ -215,9 +225,6 @@ int main(int argc, char **argv)
         if(offb && armed && !flight_ready){
             flight_ready = true;
             ROS_INFO("Armed and in offboard control mode");
-            pose.pose.position.x = current_pose.pose.position.x;
-            pose.pose.position.y = current_pose.pose.position.y;
-            pose.pose.position.z = current_pose.pose.position.z;
         }
         
         // Takeoff
@@ -226,10 +233,7 @@ int main(int argc, char **argv)
                 pose.header.stamp = ros::Time::now();
             } else {
                 ROS_INFO("Moving to takeoff");
-                pose.header.stamp = ros::Time::now();
-                pose.pose.position.x = current_pose.pose.position.x;
-                pose.pose.position.y = current_pose.pose.position.y;
-                pose.pose.position.z = .7;
+                pose = takeoff_pose;
                 man1 = true;
                 last_request = ros::Time::now();
             }
@@ -282,7 +286,7 @@ int main(int argc, char **argv)
             if(ros::Time::now() - last_request < ros::Duration(1.0)){
                 velocity.header.stamp = ros::Time::now();
             } else {
-                ROS_INFO("Velocity Maneuver: Positive Velocity .2 m/s");
+                ROS_INFO("Velocity Maneuver: Positive Velocity .5 m/s");
                 velocity = vel_pos_x;
                 velocity.header.stamp = ros::Time::now();
                 man3 = true;

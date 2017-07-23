@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     geometry_msgs::PoseStamped landing_pose;
 
     // Set the home and takeoff pose
-    home_pose.pose.position.x = -4.0;
+    home_pose.pose.position.x = -2.5;
     home_pose.pose.position.y = 0.0;
     home_pose.pose.position.z = 0.0;
     
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
     vel_pos_x.twist.linear.z = 0.0;
 
     std_msgs::Float32 v;
-    v.data = .5;
+    v.data = .75;
 
     geometry_msgs::TwistStamped vel_neg_x;
     vel_neg_x = velocity;
@@ -204,7 +204,6 @@ int main(int argc, char **argv)
     bool Dswitch = false;
     bool Dswitch_out = true;
     bool safety_switch = false;
-    bool initial_D_switch = false;
 
     // MAIN CONTROL LOOP
     while(ros::ok()){
@@ -260,21 +259,13 @@ int main(int argc, char **argv)
                     last_request = ros::Time::now();
                 }
             }
-                
-            if (Arr[5] < 1500){
-               ROS_INFO_THROTTLE(2,"D-Switch is good");
-               initial_D_switch = true;
-            } else {
-               ROS_INFO_THROTTLE(2,"D-Switch is up!"); 
-            }
-         
         } // End of SITL switch
-         
+
         // Are we ready to take off?
-        if(offb && armed && !flight_ready && initial_D_switch){
+        if(offb && armed && !flight_ready){
             flight_ready = true;
             ROS_INFO("Armed and in offboard control mode");
-            pose.pose.position.x = -4.0;
+            pose.pose.position.x = -2.5;
             pose.pose.position.y = 0.0;
             pose.pose.position.z = 0.0;
         }
@@ -286,7 +277,7 @@ int main(int argc, char **argv)
             } else {
                 ROS_INFO("Moving to takeoff");
                 pose.header.stamp = ros::Time::now();
-                pose.pose.position.x = -4.0;
+                pose.pose.position.x = -2.5;
                 pose.pose.position.y = 0.0;
                 pose.pose.position.z = .7;
                 man1 = true;
@@ -352,8 +343,8 @@ int main(int argc, char **argv)
 
         // Move forward for 10 seconds
         if(man3 && !man4){
-            // Continue forward motion until safety |limits are reached
-            if((current_pose.pose.position.x > 1.0) || (current_pose.pose.position.y < -2.0)){
+            // Continue forward motion until safety limits are reached
+            if(current_pose.pose.position.x > 1.0){
                 safety_switch = true;
             }
          
@@ -412,19 +403,18 @@ int main(int argc, char **argv)
         }
         
         // If we are moving forward, start publishing yaw commands
-        if (Dswitch && !safety_switch){
-            ctrl_msg.yaw_rate_cmd = yaw_cmd.yaw_rate_cmd;
-            ctrl_msg.x_vel_body = v.data*cos(yaw.data);
-            ctrl_msg.y_vel_body = v.data*sin(yaw.data);
-      
-            velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
-            velocity.twist.linear.x = v.data*cos(yaw.data);
-            velocity.twist.linear.y = v.data*sin(yaw.data);
-            velocity.twist.linear.z = 0.0;
-        }
+      //  if (Dswitch && !safety_switch && false){
+        //    ctrl_msg.yaw_rate_cmd = yaw_cmd.yaw_rate_cmd;
+          //  ctrl_msg.x_vel_body = v.data*cos(yaw.data);
+      //      ctrl_msg.y_vel_body = v.data*sin(yaw.data);
+            
+            //velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
+            //velocity.twist.linear.x = v.data*cos(yaw.data);
+            //velocity.twist.linear.y = v.data*sin(yaw.data);
+    //    }
 
-        yaw_angle_pub.publish(yaw);
-        control_pub.publish(ctrl_msg);
+   //     yaw_angle_pub.publish(yaw);
+   //     control_pub.publish(ctrl_msg);
  
         // Publish setpoints and record status for MATLAB        
         if(setpoint_type == setpoint_pose){
