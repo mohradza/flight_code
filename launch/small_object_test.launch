@@ -1,7 +1,9 @@
 <launch>
   
-  <!-- Start the VRPN Client -->
+  <!-- Start the VRPN Client (only needed if recording data)-->
+  <!--
   <include file="/opt/ros/kinetic/share/vrpn_client_ros/launch/OF_F330.launch"/>
+  -->
 
   <!-- Start coms to PixHawk via Mavros -->
   <include file="/opt/ros/kinetic/share/mavros/launch/px4.launch"/>
@@ -19,6 +21,12 @@
   
   <!-- Start the optic flow node -->
   <node pkg="small_object" type="OF_controller.py" name="OF_node" output="screen" />
+
+  <!-- Start the flight code (steering controller) -->
+  <node pkg="flight_code" type="small_object_flight_code" name="flight_control" output="screen" />
+
+
+<!-- RECORD TEMPLATE -->
 
   <!-- Start recording with Rosbag 
   <node pkg="rosbag" type="record" name="rosbag_OF_data"

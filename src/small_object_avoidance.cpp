@@ -1,6 +1,5 @@
-
 /**
- * @file full_OF_steering.cpp
+ * @file small_object_avoidance.cpp
  * @brief Full implementation of OF (fourier residual approach) steering controller.
  *        Takeoff in manual control mode, then transfer control over to OFFBOARD
  *        in position control mode. 
@@ -47,7 +46,7 @@ void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
         //t2 = t2 < -1.0 ? -1.0 : t2;
         //pitch = std::asin(t2);
 
-        // yaw (z-axis rotation)
+        // yaw (z-axis rotation)   
     double t3 = +2.0 * (w * z + x * y);
     double t4 = +1.0 - 2.0 * (ysqr + z * z);  
     yaw.data = std::atan2(t3, t4);
@@ -119,7 +118,7 @@ int main(int argc, char **argv)
     velocity.twist.linear.z = 0.0;
 
     // Desired current forward speed
-    float v = .5; 
+    float v = .8; 
 
     // Wait for FCU connection
     while(ros::ok() && current_state.connected){
@@ -138,12 +137,6 @@ int main(int argc, char **argv)
     bool get_pose = false;
     bool setpoint_pose = true;
     float forward_yaw_angle = 0.0;
-
-    // Setpoint type
-//    int setpoint_type = 0;
-//    int setpoint_pose = 0;
-//    int setpoint_att = 1;
-//    int setpoint_vel = 2;
 
 
     // MAIN CONTROL LOOP
@@ -174,13 +167,11 @@ int main(int argc, char **argv)
         if(Arr[5] < 1500){
             ROS_INFO_THROTTLE(5,"DSwitch is down.");
             Dswitch = false;
+            yaw_switch1 = false;
+            yaw_switch2 = false;
         } else if ((Arr[5] >= 1500) && (Dswitch_out)){
             Dswitch = true;
-            ROS_INFO("Dswitch flipped.");
-            // This handles the time difference between
-            // takeoff and entering forward motion
-            last_request = ros::Time::now();
-            Dswitch_out = false;
+            ROS_INFO_THROTTLE(5,"Dswitch is up.");
         }
 
         // Stay in position hold mode until D-sswitch flip
@@ -202,28 +193,30 @@ int main(int argc, char **argv)
 
         }
 
+        // Once the Dswitch is flipped, initiate the switch to velocity mode
         if (Dswitch){
             yaw_switch1 = true;
         }
 
-        // We only want to run this once to set the forward_yaw_angle
-        // and transition the vehicle to velocity mode
+        // Transition the vehicle to moving forward in velocity mode
         if (yaw_switch1 && !yaw_switch2){
-           forward_yaw_angle = yaw.data;
-           
            velocity.twist.linear.x = v*cos(forward_yaw_angle);
            velocity.twist.linear.y = v*sin(forward_yaw_angle);
            velocity.twist.linear.z = 0.0;
 
+           velocity.twist.angular.x = 0.0;
+           velocity.twist.angular.y = 0.0;
+           velocity.twist.angular.z = 0.0;
+           
            setpoint_pose = false;
            yaw_switch2 = true;
         }
 
-        // Once we are moving forward, starting taking yaw commands
+        // Once we are moving forward, start taking yaw commands
         if (yaw_switch2){
            velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
-           velocity.twist.linear.x = v*cos(yaw.data - forward_yaw_angle);
-           velocity.twist.linear.y = v*sin(yaw.data - forward_yaw_angle);
+           velocity.twist.linear.x = v*cos(yaw.data);
+           velocity.twist.linear.y = v*sin(yaw.data);
            velocity.twist.linear.z = 0.0;
 
         }         
@@ -238,7 +231,7 @@ int main(int argc, char **argv)
         } else {
             velocity.header.stamp = ros::Time::now();
             local_vel_pub.publish(velocity);            
-            ROS_INFO_THROTTLE(2,"Publishing setpoint vel data...");
+            ROS_INFO_THROTTLE(2,"Publishing setpoint vel data. twist.angular.z = %f", velocity.twist.angular.z);
         } 
     
         yaw_angle_pub.publish(yaw);            

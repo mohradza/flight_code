@@ -1,9 +1,9 @@
 
 /**
- * @file x_vel_step_test.cpp
- * @brief Adaptation of the offb_node.cpp script. Commands the
- *        vehicle to a takeoff position, then a maneuver start position,
- *        then it commands a step velocity input, halts, and returns to land.
+ * @file pub_forward_vel_new.cpp
+ * @brief Script used to develop the flight control for offboard OF steering
+ *        Started out as a simple coordinate transformation based on the heading
+ *        to generate a body forward velocity.
  */
 #include <math.h>
 #include <ros/ros.h>

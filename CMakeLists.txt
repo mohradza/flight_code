@@ -40,15 +40,14 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 #add_executable(RC_sysID src/sys_ID_test.cpp)
 #target_link_libraries(RC_sysID ${catkin_LIBRARIES})
 
-add_executable(forward_vel_test src/main_flight_controller.cpp)
-target_link_libraries(forward_vel_test ${catkin_LIBRARIES})
+#add_executable(forward_vel_test src/main_flight_controller.cpp)
+#target_link_libraries(forward_vel_test ${catkin_LIBRARIES})
 
-add_executable(takeoff_test src/forward_vel_stop_test.cpp)
-target_link_libraries(takeoff_test ${catkin_LIBRARIES})
+#add_executable(takeoff_test src/forward_vel_stop_test.cpp)
+#target_link_libraries(takeoff_test ${catkin_LIBRARIES})
 
-add_executable(pub_forward_vel src/pub_forward_vel.cpp)
-target_link_libraries(pub_forward_vel ${catkin_LIBRARIES})
+#add_executable(pub_forward_vel src/pub_forward_vel.cpp)
+#target_link_libraries(pub_forward_vel ${catkin_LIBRARIES})
 
-
-add_executable(hold_then_vel src/pub_forward_vel_new.cpp)
-target_link_libraries(hold_then_vel ${catkin_LIBRARIES})
+add_executable(small_object_flight_code src/small_object_avoidance.cpp)
+target_link_libraries(small_object_flight_code ${catkin_LIBRARIES})

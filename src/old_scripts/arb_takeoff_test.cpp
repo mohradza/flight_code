@@ -1,6 +1,6 @@
 
 /**
- * @file takeoff_hold_test.cpp
+ * @file arb_takeoff_test.cpp
  * @brief Adaptation of the offb_node.cpp script. Commands the
  *        vehicle to a height of 1.5m above the local home position
  *        after OFFBOARD mode has been set and the system has been armed.
@@ -39,6 +39,8 @@ int main(int argc, char **argv)
     // Set up Publishers
     ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
             ("mavros/setpoint_position/local", 10);
+    ros::Publisher record_data_pub = nh.advertise<std_msgs::Bool>
+            ("MATLAB/record",10);
     // Set up Service Clients
     ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>
             ("mavros/cmd/arming");
@@ -62,6 +64,11 @@ int main(int argc, char **argv)
 
     geometry_msgs::PoseStamped landing_pose;
 
+    // Record Data?
+    std_msgs::Bool record_data;
+    record_data.data = false;
+
+
     // Wait for FCU connection
     while(ros::ok() && current_state.connected){
         ros::spinOnce();
@@ -69,26 +76,21 @@ int main(int argc, char **argv)
     }
 
     // Set the home and takeoff pose
-    home_pose.pose.position.x = 0.0;
+    home_pose.pose.position.x = -2.5;
     home_pose.pose.position.y = 0.0;
-    home_pose.pose.position.z = 0.10;
-    home_pose.pose.orientation.x = 0.0;
-    home_pose.pose.orientation.y = 0.0;
-    home_pose.pose.orientation.z = 0.0;
-    home_pose.pose.orientation.w = 1.0;
+    home_pose.pose.position.z = -.15;
 
-    landing_pose = current_pose;
-    landing_pose.pose.position.z = home_pose.pose.position.z - .05;
-
-    takeoff_pose.pose.position.x = 0.0;
+    takeoff_pose.pose.position.x = -2.5;
     takeoff_pose.pose.position.y = 0.0;
-    takeoff_pose.pose.position.z = 1.0;
+    takeoff_pose.pose.position.z = .7;
     takeoff_pose.pose.orientation.x = 0.0;
     takeoff_pose.pose.orientation.y = 0.0;
     takeoff_pose.pose.orientation.z = 0.0;
     takeoff_pose.pose.orientation.w = 1.0;
 
-
+    landing_pose = home_pose;
+    landing_pose.pose.position.z = home_pose.pose.position.z = -.15;
+    
 
     // Send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
@@ -187,7 +189,7 @@ int main(int argc, char **argv)
 
         // Takeoff
         if(flight_ready && !man1){
-           if(ros::Time::now() - last_request < ros::Duration(2.0)){
+            if(ros::Time::now() - last_request < ros::Duration(1.0)){
                 pose = home_pose;
                 pose.header.stamp = ros::Time::now();
             } else {
@@ -201,7 +203,7 @@ int main(int argc, char **argv)
 
         // Hold takeoff position
         if(man1 && !man2){
-            if(ros::Time::now() - last_request < ros::Duration(15.0)){
+            if(ros::Time::now() - last_request < ros::Duration(5.0)){
                 pose.header.stamp = ros::Time::now();
             } else {
               ROS_INFO("Sending Pose: landing_pose");

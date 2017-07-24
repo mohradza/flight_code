@@ -59,11 +59,21 @@ int main(int argc, char **argv)
     geometry_msgs::PoseStamped takeoff_pose;
 
     geometry_msgs::PoseStamped man_start_pose;
-    man_start_pose.pose.position.x = -2.0;
+    man_start_pose.pose.position.x = -3.0;
     man_start_pose.pose.position.y = 0.0;
-    man_start_pose.pose.position.z = 1.0;
+    man_start_pose.pose.position.z = 1.5;
 
     geometry_msgs::PoseStamped landing_pose;
+    takeoff_pose = home_pose;
+    takeoff_pose.pose.position.z = 1.5;
+    takeoff_pose.pose.orientation.x = 0.0;
+    takeoff_pose.pose.orientation.y = 0.0;
+    takeoff_pose.pose.orientation.z = 0.0;
+    takeoff_pose.pose.orientation.w = -1.0;
+
+    landing_pose = takeoff_pose;
+    landing_pose.pose.position.z = home_pose.pose.position.z - .015;
+
 
 
     // Create velocity commands
@@ -77,11 +87,11 @@ int main(int argc, char **argv)
 
     geometry_msgs::TwistStamped vel_pos_x;
     vel_pos_x = velocity;
-    vel_pos_x.twist.linear.x = 0.20;
+    vel_pos_x.twist.linear.x = 0.5;
 
     geometry_msgs::TwistStamped vel_neg_x;
     vel_neg_x = velocity;
-    vel_neg_x.twist.linear.x = -0.25;
+    vel_neg_x.twist.linear.x = -0.5;
 
 
     // Setpoint type
@@ -96,19 +106,6 @@ int main(int argc, char **argv)
         ros::spinOnce();
         rate.sleep();
     }
-
-    // Set the home and takeoff pose
-    home_pose = current_pose;
- 
-    takeoff_pose = home_pose;
-    takeoff_pose.pose.position.z = 1.0;
-    takeoff_pose.pose.orientation.x = 0.0;
-    takeoff_pose.pose.orientation.y = 0.0;
-    takeoff_pose.pose.orientation.z = 0.0;
-    takeoff_pose.pose.orientation.w = -1.0;
-
-    landing_pose = takeoff_pose;
-    landing_pose.pose.position.z = home_pose.pose.position.z - .015;
 
     // Send a few setpoints before starting
     for(int i = 100; ros::ok() && i > 0; --i){
@@ -149,6 +146,7 @@ int main(int argc, char **argv)
     bool offb = false;
     bool flight_ready = false;
     bool sitl = false;
+    bool safety_switch = false;
 
     // MAIN CONTROL LOOP
     while(ros::ok()){
@@ -241,7 +239,7 @@ int main(int argc, char **argv)
         }
 
 
-        // Move to first beginning of hallway
+        // Move to first start positon
         if(takeoff && !man2){
             if(ros::Time::now() - last_request < ros::Duration(5.0)){
                 pose.header.stamp = ros::Time::now();
@@ -268,9 +266,14 @@ int main(int argc, char **argv)
             }
         }
 
-        // Move forward for 10 seconds
+        // check to see if boundary has been hit yet          
+        if ((current_pose.pose.position.x > 1.0) && !safety_switch){
+            safety_switch = true;
+        }
+
+        // Move forward until boundary is hit
         if(man3 && !man4){
-            if(ros::Time::now() - last_request < ros::Duration(10.0)){
+            if(!safety_switch){
                 velocity.header.stamp = ros::Time::now();
             } else {
                 ROS_INFO("Velocity Maneuver: Stop Velocity");
@@ -312,7 +315,7 @@ int main(int argc, char **argv)
 
         // Land
         if(man6 && !landed){
-            if(ros::Time::now() - last_request < ros::Duration(3.0)){
+            if(ros::Time::now() - last_request < ros::Duration(5.0)){
                 pose.header.stamp = ros::Time::now();
             } else {
                 ROS_INFO("Landing...");

@@ -353,7 +353,11 @@ int main(int argc, char **argv)
         // Move forward for 10 seconds
         if(man3 && !man4){
             // Continue forward motion until safety |limits are reached
+<<<<<<< HEAD
             if((current_pose.pose.position.x > 1.0) || (current_pose.pose.position.y < -2.0)){
+=======
+            if((current_pose.pose.position.x > 2.0) || (current_pose.pose.position.y < -2.0)){
+>>>>>>> 139ff3c087f54baf776de3c8d87da64bce17289f
                 safety_switch = true;
             }
          

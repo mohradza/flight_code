@@ -1,9 +1,7 @@
 
 /**
- * @file x_vel_step_test.cpp
- * @brief Adaptation of the offb_node.cpp script. Commands the
- *        vehicle to a takeoff position, then a maneuver start position,
- *        then it commands a step velocity input, halts, and returns to land.
+ * @file forward_vel_stop_test.cpp
+ * @brief Script developed to test setting a safety limit on x or y motion.
  */
 
 #include <ros/ros.h>
