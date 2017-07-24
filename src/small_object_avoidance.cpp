@@ -196,6 +196,7 @@ int main(int argc, char **argv)
         // Once the Dswitch is flipped, initiate the switch to velocity mode
         if (Dswitch){
             yaw_switch1 = true;
+            get_pose = false;
         }
 
         // Transition the vehicle to moving forward in velocity mode
