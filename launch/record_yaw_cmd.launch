@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="rosbag" type="record" name="rosbag_flight_data"
+        args=" -O /tmp/yaw_cmd_data /optic_flow/optic_flow /controller_out/yaw_rate_cmd" />
+
+</launch>

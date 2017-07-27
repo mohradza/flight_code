@@ -1,12 +1,13 @@
-/**
+/*
  * @file small_object_avoidance.cpp
  * @brief Full implementation of OF (fourier residual approach) steering controller.
  *        Takeoff in manual control mode, then transfer control over to OFFBOARD
- *        in position control mode. 
- *        
+ *        in position control mode. This node takes in yaw rate commands from 
+ *        the small object node (small_object_avoidance.py)
  */
 #include <math.h>
 #include <ros/ros.h>
+#include <std_msgs/Int16.h>
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -92,7 +93,8 @@ int main(int argc, char **argv)
             ("yaw_angle",10);
     ros::Publisher control_pub = nh.advertise<flight_code::ControllerOutMsg>
             ("controller_out",10);
-
+    ros::Publisher dswitch_pub = nh.advertise<std_msgs::Int16>
+            ("dswitch",10);
 
     //the setpoint publishing rate MUST be faster than 2Hz
     ros::Rate rate(20.0);
@@ -137,6 +139,8 @@ int main(int argc, char **argv)
     bool get_pose = false;
     bool setpoint_pose = true;
     float forward_yaw_angle = 0.0;
+    std_msgs::Int16 Dswitch_msg;
+    Dswitch_msg.data = 0;
 
 
     // MAIN CONTROL LOOP
@@ -165,13 +169,15 @@ int main(int argc, char **argv)
 
         // Check D-Switch Value for internal mode switching
         if(Arr[5] < 1500){
-            ROS_INFO_THROTTLE(5,"DSwitch is down.");
+            ROS_INFO_THROTTLE(10,"DSwitch is down.");
             Dswitch = false;
             yaw_switch1 = false;
             yaw_switch2 = false;
+            Dswitch_msg.data = 0;
         } else if ((Arr[5] >= 1500) && (Dswitch_out)){
             Dswitch = true;
-            ROS_INFO_THROTTLE(5,"Dswitch is up.");
+            ROS_INFO_THROTTLE(10,"Dswitch is up.");
+	    Dswitch_msg.data = 1;
         }
 
         // Stay in position hold mode until D-sswitch flip
@@ -215,7 +221,7 @@ int main(int argc, char **argv)
 
         // Once we are moving forward, start taking yaw commands
         if (yaw_switch2){
-           velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
+           //velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
            velocity.twist.linear.x = v*cos(yaw.data);
            velocity.twist.linear.y = v*sin(yaw.data);
            velocity.twist.linear.z = 0.0;
@@ -236,7 +242,7 @@ int main(int argc, char **argv)
         } 
     
         yaw_angle_pub.publish(yaw);            
-          
+        dswitch_pub.publish(Dswitch_msg);
         //ROS_INFO_THROTTLE(2,"Current yaw angle is: %f", yaw.data);
         
         //  ROS_INFO_THROTTLE(1,"Current yaw angle is: %f",yaw);
