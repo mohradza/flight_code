@@ -19,13 +19,14 @@
 #include <flight_code/YawRateCmdMsg.h>
 #include <flight_code/ControllerOutMsg.h>
 
-
+// State Callback
 mavros_msgs::State current_state;
 void state_cb(const mavros_msgs::State::ConstPtr& msg){
     current_state = *msg;
 }
 
 // Pose Callback
+// Quaternion to Euler Transformation for yaw angle relative to North
 std_msgs::Float32 yaw;
 geometry_msgs::PoseStamped current_pose;
 void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
@@ -69,6 +70,8 @@ void yaw_cmd_cb(const flight_code::YawRateCmdMsg::ConstPtr& msg){
     yaw_cmd  = *msg;
 }
 
+
+// MAIN LOOP
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "offb_node");
@@ -91,8 +94,6 @@ int main(int argc, char **argv)
             ("mavros/setpoint_velocity/cmd_vel", 10);
     ros::Publisher yaw_angle_pub = nh.advertise<std_msgs::Float32>
             ("yaw_angle",10);
-    ros::Publisher control_pub = nh.advertise<flight_code::ControllerOutMsg>
-            ("controller_out",10);
     ros::Publisher dswitch_pub = nh.advertise<std_msgs::Int16>
             ("dswitch",10);
 
@@ -120,7 +121,7 @@ int main(int argc, char **argv)
     velocity.twist.linear.z = 0.0;
 
     // Desired current forward speed
-    float v = .8; 
+    float v = .5; 
 
     // Wait for FCU connection
     while(ros::ok() && current_state.connected){
@@ -145,14 +146,20 @@ int main(int argc, char **argv)
 
     // MAIN CONTROL LOOP
     while(ros::ok()){
-        // Just need to publish a forward velocity
-        // We will be switching from position hold to offboard mode
+        // Start off in Manual flight mode until the desired initial position
+        // and orientation are achieved. Control is then transitioned to
+        // position hold in offboard mode, followed by velocity control
+        // which incorproates the yaw rate commands created by OF_controller.py
+
+        // Wait for system to arm, provide some feedback to the screen
         if (!current_state.armed){
 	    ROS_INFO_THROTTLE(1,"Waiting for arm...");
 	} else {
             arm_switch = true;
         }
         
+        // This loop initializes the position / orientation tracking
+        // and sets the setpoint mode to pose.
         if(arm_switch && current_state.mode == "STABILIZED"){
             ROS_INFO_THROTTLE(2, "System is Armed and in Stabilized Flight Mode");
             setpoint_pose = true;
@@ -180,8 +187,8 @@ int main(int argc, char **argv)
 	    Dswitch_msg.data = 1;
         }
 
-        // Stay in position hold mode until D-sswitch flip
-
+        // After transition to offboard mode from TX,
+        // stay in position hold mode until D-switch flip
         if(current_state.mode == "OFFBOARD" && !Dswitch){
             ROS_INFO_THROTTLE(2, "System is Armed and in OFFBOARD Mode: Position Hold.");
             if (!get_pose){
