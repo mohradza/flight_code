@@ -1,9 +1,7 @@
 <launch>
   
   <!-- Start the VRPN Client (only needed if recording data)-->
-  <!--
-  <include file="/opt/ros/kinetic/share/vrpn_client_ros/launch/OF_F330.launch"/>
-  -->
+  <include file="/opt/ros/kinetic/share/vrpn_client_ros/launch/SO_vicon.launch"/>
 
   <!-- Start coms to PixHawk via Mavros -->
   <include file="/opt/ros/kinetic/share/mavros/launch/px4.launch"/>
@@ -24,6 +22,11 @@
 
   <!-- Start the flight code (steering controller) -->
   <node pkg="flight_code" type="small_object_flight_code" name="flight_control" output="screen" />
+
+
+  <!-- Start the main topic publisher -->
+  <node pkg="flight_code" type="data_pub" name="data_pub" output="screen" />
+
 
 
 <!-- RECORD TEMPLATE -->

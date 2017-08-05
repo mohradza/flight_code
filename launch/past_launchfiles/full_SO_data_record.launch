@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="rosbag" type="record" name="rosbag_flight_data"
+        args=" -O /tmp/SO_dataset /yaw_angle /dswitch /mavros/local_position/velocity /mavros/setpoint_velocity/cmd_vel /optic_flow/optic_flow /vrpn_client_node/OF_quad_data/pose /vrpn_client_node/OF_quad_data/twist /vrpn_client_node/OF_quad_data/accel" />
+
+</launch>

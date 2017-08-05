@@ -9,12 +9,16 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_runtime
+  small_object
 )
 
 add_message_files(DIRECTORY msg 
                   FILES 
                   YawRateCmdMsg.msg
-                  ControllerOutMsg.msg)
+                  ControllerOutMsg.msg
+                  AllDataOutMsg.msg 
+                  YawAngleMsg.msg
+                  DSwitchMsg.msg)
 
 generate_messages(DEPENDENCIES std_msgs)
 
@@ -51,3 +55,6 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(small_object_flight_code src/small_object_avoidance.cpp)
 target_link_libraries(small_object_flight_code ${catkin_LIBRARIES})
+
+add_executable(data_pub src/data_collect_and_pub.cpp)
+target_link_libraries(data_pub ${catkin_LIBRARIES})

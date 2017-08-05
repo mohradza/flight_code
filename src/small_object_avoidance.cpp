@@ -16,8 +16,10 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/RCIn.h>
 #include <std_msgs/Float32.h>
-#include <flight_code/YawRateCmdMsg.h>
+#include <small_object/YawRateCmdMsg.h>
 #include <flight_code/ControllerOutMsg.h>
+#include <flight_code/YawAngleMsg.h>
+#include <flight_code/DSwitchMsg.h>
 
 // State Callback
 mavros_msgs::State current_state;
@@ -27,7 +29,7 @@ void state_cb(const mavros_msgs::State::ConstPtr& msg){
 
 // Pose Callback
 // Quaternion to Euler Transformation for yaw angle relative to North
-std_msgs::Float32 yaw;
+flight_code::YawAngleMsg yaw_angle_msg;
 geometry_msgs::PoseStamped current_pose;
 void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     current_pose = *msg;
@@ -51,7 +53,7 @@ void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
         // yaw (z-axis rotation)   
     double t3 = +2.0 * (w * z + x * y);
     double t4 = +1.0 - 2.0 * (ysqr + z * z);  
-    yaw.data = std::atan2(t3, t4);
+    yaw_angle_msg.yaw_angle = std::atan2(t3, t4);
 }
 
 // RCin callback
@@ -65,9 +67,9 @@ void RCin_cb(const mavros_msgs::RCIn::ConstPtr& msg){
 }
 
 // Yaw rate command callback
-flight_code::YawRateCmdMsg yaw_cmd;
-void yaw_cmd_cb(const flight_code::YawRateCmdMsg::ConstPtr& msg){
-    yaw_cmd  = *msg;
+small_object::YawRateCmdMsg yaw_cmd;
+void yaw_cmd_cb(const small_object::YawRateCmdMsg::ConstPtr& msg){
+    yaw_cmd = *msg;
 }
 
 
@@ -84,7 +86,7 @@ int main(int argc, char **argv)
             ("mavros/local_position/pose", 10, pose_cb);
     ros::Subscriber RC_in_sub = nh.subscribe<mavros_msgs::RCIn>
             ("/mavros/rc/in", 10, RCin_cb);
-    ros::Subscriber yaw_cmd_sub = nh.subscribe<flight_code::YawRateCmdMsg>
+    ros::Subscriber yaw_cmd_sub = nh.subscribe<small_object::YawRateCmdMsg>
             ("/controller_out/yaw_rate_cmd", 10, yaw_cmd_cb);
 
     // Publishers
@@ -92,9 +94,9 @@ int main(int argc, char **argv)
             ("mavros/setpoint_position/local", 10);
     ros::Publisher local_vel_pub = nh.advertise<geometry_msgs::TwistStamped>
             ("mavros/setpoint_velocity/cmd_vel", 10);
-    ros::Publisher yaw_angle_pub = nh.advertise<std_msgs::Float32>
+    ros::Publisher yaw_angle_pub = nh.advertise<flight_code::YawAngleMsg>
             ("yaw_angle",10);
-    ros::Publisher dswitch_pub = nh.advertise<std_msgs::Int16>
+    ros::Publisher dswitch_pub = nh.advertise<flight_code::DSwitchMsg>
             ("dswitch",10);
 
     //the setpoint publishing rate MUST be faster than 2Hz
@@ -121,7 +123,7 @@ int main(int argc, char **argv)
     velocity.twist.linear.z = 0.0;
 
     // Desired current forward speed
-    float v = .5; 
+    float v = .75; 
 
     // Wait for FCU connection
     while(ros::ok() && current_state.connected){
@@ -140,8 +142,8 @@ int main(int argc, char **argv)
     bool get_pose = false;
     bool setpoint_pose = true;
     float forward_yaw_angle = 0.0;
-    std_msgs::Int16 Dswitch_msg;
-    Dswitch_msg.data = 0;
+    flight_code::DSwitchMsg Dswitch_msg;
+    Dswitch_msg.dswitch = 0;
 
 
     // MAIN CONTROL LOOP
@@ -164,6 +166,7 @@ int main(int argc, char **argv)
             ROS_INFO_THROTTLE(2, "System is Armed and in Stabilized Flight Mode");
             setpoint_pose = true;
             forward_pose = current_pose;
+            pose.header.stamp = ros::Time::now();
             pose.pose.position.x = forward_pose.pose.position.x;
             pose.pose.position.y = forward_pose.pose.position.y;
             pose.pose.position.z = forward_pose.pose.position.z;
@@ -180,11 +183,12 @@ int main(int argc, char **argv)
             Dswitch = false;
             yaw_switch1 = false;
             yaw_switch2 = false;
-            Dswitch_msg.data = 0;
+           // get_pose = false;
+            Dswitch_msg.dswitch = 0;
         } else if ((Arr[5] >= 1500) && (Dswitch_out)){
             Dswitch = true;
             ROS_INFO_THROTTLE(10,"Dswitch is up.");
-	    Dswitch_msg.data = 1;
+	    Dswitch_msg.dswitch = 1;
         }
 
         // After transition to offboard mode from TX,
@@ -193,6 +197,7 @@ int main(int argc, char **argv)
             ROS_INFO_THROTTLE(2, "System is Armed and in OFFBOARD Mode: Position Hold.");
             if (!get_pose){
                 forward_pose = current_pose;
+                pose.header.stamp = ros::Time::now();
                 pose.pose.position.x = forward_pose.pose.position.x;
                 pose.pose.position.y = forward_pose.pose.position.y;
                 pose.pose.position.z = forward_pose.pose.position.z;
@@ -214,6 +219,8 @@ int main(int argc, char **argv)
 
         // Transition the vehicle to moving forward in velocity mode
         if (yaw_switch1 && !yaw_switch2){
+           forward_yaw_angle = yaw_angle_msg.yaw_angle;
+           velocity.header.stamp = ros::Time::now();
            velocity.twist.linear.x = v*cos(forward_yaw_angle);
            velocity.twist.linear.y = v*sin(forward_yaw_angle);
            velocity.twist.linear.z = 0.0;
@@ -228,27 +235,28 @@ int main(int argc, char **argv)
 
         // Once we are moving forward, start taking yaw commands
         if (yaw_switch2){
-           //velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
-           velocity.twist.linear.x = v*cos(yaw.data);
-           velocity.twist.linear.y = v*sin(yaw.data);
+           velocity.header.stamp = ros::Time::now();
+           velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
+           velocity.twist.linear.x = v*cos(yaw_angle_msg.yaw_angle);
+           velocity.twist.linear.y = v*sin(yaw_angle_msg.yaw_angle);
            velocity.twist.linear.z = 0.0;
 
         }         
 
         // Publish setpoints and record status for MATLAB        
         if(setpoint_pose){
-            pose.header.stamp = ros::Time::now();
             local_pos_pub.publish(pose);
             ROS_INFO_THROTTLE(2,"Publishing setpoint pose data...");
        // } else if(setpoint_type == setpoint_att){
            // local_att_pub.publish(attitude);
         } else {
-            velocity.header.stamp = ros::Time::now();
             local_vel_pub.publish(velocity);            
-            ROS_INFO_THROTTLE(2,"Publishing setpoint vel data. twist.angular.z = %f", velocity.twist.angular.z);
+            ROS_INFO_THROTTLE(2,"Publishing setpoint vel data...");
         } 
-    
-        yaw_angle_pub.publish(yaw);            
+        //yaw_angle_msg.header.stamp = ros::Time::now();
+        //yaw_angle_pub.publish(yaw_angle_msg);            
+        
+        //Dswitch_msg.header.stamp = ros::Time::now();
         dswitch_pub.publish(Dswitch_msg);
         //ROS_INFO_THROTTLE(2,"Current yaw angle is: %f", yaw.data);
         
