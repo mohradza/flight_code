@@ -18,6 +18,7 @@ add_message_files(DIRECTORY msg
                   ControllerOutMsg.msg
                   AllDataOutMsg.msg 
                   YawAngleMsg.msg
+                  FOFAllDataOutMsg.msg
                   DSwitchMsg.msg)
 
 generate_messages(DEPENDENCIES std_msgs)
@@ -58,3 +59,7 @@ target_link_libraries(small_object_flight_code ${catkin_LIBRARIES})
 
 add_executable(data_pub src/data_collect_and_pub.cpp)
 target_link_libraries(data_pub ${catkin_LIBRARIES})
+
+add_executable(FOF_data_pub src/FOF_data_collect_and_pub.cpp)
+target_link_libraries(FOF_data_pub ${catkin_LIBRARIES})
+
