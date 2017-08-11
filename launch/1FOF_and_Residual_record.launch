@@ -1,5 +1,5 @@
 <launch>
   <node pkg="rosbag" type="record" name="rosbag_flight_data"
-        args=" -O /tmp/SO_dataset /AllDataOut" />
+        args=" -O /tmp/SO_dataset /FOFAllDataOut" />
 
 </launch>

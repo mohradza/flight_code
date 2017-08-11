@@ -1,9 +1,8 @@
 
 /**
- * @file x_vel_step_test.cpp
- * @brief Adaptation of the offb_node.cpp script. Commands the
- *        vehicle to a takeoff position, then a maneuver start position,
- *        then it commands a step velocity input, halts, and returns to land.
+ * @file  FOF_data_collection_and_pub.cpp
+ * @brief Gathers all data related to Flow of Flow and
+ *           publishes it as on message with a shared header.
  */
 
 #include <ros/ros.h>
@@ -28,7 +27,7 @@
 geometry_msgs::PoseStamped vicon_pose;
 void vicon_pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg){
     vicon_pose = *msg;
-    ROS_INFO_THROTTLE(2,"Pose cb");
+//    ROS_INFO_THROTTLE(2,"Pose cb");
 }
 
 // Vicon Velocity Callback
@@ -99,9 +98,9 @@ int main(int argc, char **argv)
             ("/dswitch", 10, dswitch_cb);
     ros::Subscriber FOF_sub = nh.subscribe<small_object::FOF_and_ResidualMsg>
             ("/FOF_data", 10, FOF_cb);
-
+    
     // Publishers
-    ros::Publisher full_data_pub = nh.advertise<flight_code::AllDataOutMsg>
+    ros::Publisher full_data_pub = nh.advertise<flight_code::FOFAllDataOutMsg>
             ("FOFAllDataOut", 10);
     
     
@@ -121,8 +120,9 @@ int main(int argc, char **argv)
         full_msg.header.stamp = ros::Time::now();
 
         full_msg.OF_meas = FOF_data_in.Qdot_meas;
-        full_msg.FOF_OF_filt = FOF_data_in.FOF_Qdot_filt;
+        full_msg.FOF_OF_SF = FOF_data_in.FOF_OF_SF;
         full_msg.FOF_yaw_rate_cmd = FOF_data_in.FOF_yaw_rate_cmd;
+        full_msg.FR_yaw_rate_cmd = FOF_data_in.FR_yaw_rate_cmd;
         full_msg.FR_OF_SF = FOF_data_in.FR_Qdot_SF;
 
         full_msg.vicon_position_x = vicon_pose.pose.position.x;

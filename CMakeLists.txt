@@ -54,12 +54,26 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 #add_executable(pub_forward_vel src/pub_forward_vel.cpp)
 #target_link_libraries(pub_forward_vel ${catkin_LIBRARIES})
 
-add_executable(small_object_flight_code src/small_object_avoidance.cpp)
-target_link_libraries(small_object_flight_code ${catkin_LIBRARIES})
+#add_executable(small_object_flight_code src/small_object_avoidance.cpp)
+#target_link_libraries(small_object_flight_code ${catkin_LIBRARIES})
 
-add_executable(data_pub src/data_collect_and_pub.cpp)
-target_link_libraries(data_pub ${catkin_LIBRARIES})
+#add_executable(data_pub src/data_collect_and_pub.cpp)
+#target_link_libraries(data_pub ${catkin_LIBRARIES})
 
-add_executable(FOF_data_pub src/FOF_data_collect_and_pub.cpp)
-target_link_libraries(FOF_data_pub ${catkin_LIBRARIES})
+#add_executable(FOF_data_pub src/FOF_data_collect_and_pub.cpp)
+#target_link_libraries(FOF_data_pub ${catkin_LIBRARIES})
+
+#add_executable(small_object_flight_code_vicon src/small_object_avoidance_vicon.cpp)
+#target_link_libraries(small_object_flight_code_vicon ${catkin_LIBRARIES})
+
+add_executable(FOF_data_pub_vicon src/FOF_vicon_data_collect_and_pub.cpp)
+target_link_libraries(FOF_data_pub_vicon ${catkin_LIBRARIES})
+
+add_executable(small_object_flight_code_PX4Flow src/small_object_avoidance_PX4Flow.cpp)
+target_link_libraries(small_object_flight_code_PX4Flow ${catkin_LIBRARIES})
+
+add_executable(FOF_data_pub_PX4Flow src/FOF_PX4Flow_data_collect_and_pub.cpp)
+target_link_libraries(FOF_data_pub_PX4Flow ${catkin_LIBRARIES})
+
+
 

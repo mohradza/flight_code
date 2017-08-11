@@ -1,8 +1,9 @@
 Header header
 
 float32[] OF_meas
-float32[] FOF_OF_filt
-float32[] FOF_yaw_rate_cmd
+float32[] FOF_OF_SF
+float32 FOF_yaw_rate_cmd
+float32 FR_yaw_rate_cmd
 float32[] FR_OF_SF
 
 float64 vicon_position_x
