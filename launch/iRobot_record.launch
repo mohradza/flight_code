@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="rosbag" type="record" name="rosbag_iRobot_data"
+        args=" -O /tmp/rosbag_iRobot  /vrpn_client_node/iRobot1/pose /vrpn_client_node/iRobot1/twist" />
+
+</launch>

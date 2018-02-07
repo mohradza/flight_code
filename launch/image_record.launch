@@ -18,14 +18,16 @@
   </node>
   
   <!-- Start the optic flow node -->
- <node pkg="object_avoidance" type="FlowofFlow_controller.py" name="FOF_node" output="screen" />
+ <node pkg="object_avoidance" type="FOF_FR_controller.py" name="FOF_node" output="screen" />
 
   <!-- Start the flight code (steering controller) -->
-  <node pkg="flight_code" type="small_object_flight_code_PX4" name="flight_control" output="screen" />
+  <node pkg="flight_code" type="small_object_flight_code_PX4Flow" name="flight_control" output="screen" />
 
+  <!-- Start the image processing node -->
+  <node pkg="object_avoidance" type="SF_image_process.py" name="image_process" output="screen" />
 
   <!-- Start the main topic publisher -->
-  <node pkg="flight_code" type="FOF_data_pub_PX4" name="FOF_data_pub" output="screen" />
+  <node pkg="flight_code" type="FOF_data_pub_PX4Flow" name="FOF_data_pub" output="screen" />
 
 
 

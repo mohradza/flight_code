@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="rosbag" type="record" name="image_data"
+        args=" -O /tmp/image_set /image_out" />
+
+</launch>
+

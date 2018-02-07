@@ -16,7 +16,7 @@
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/RCIn.h>
 #include <std_msgs/Float32.h>
-#include <small_object/YawRateCmdMsg.h>
+#include <object_avoidance_cpp/YawRateCmdMsg.h>
 #include <flight_code/ControllerOutMsg.h>
 #include <flight_code/YawAngleMsg.h>
 #include <flight_code/DSwitchMsg.h>
@@ -67,9 +67,10 @@ void RCin_cb(const mavros_msgs::RCIn::ConstPtr& msg){
 }
 
 // Yaw rate command callback
-small_object::YawRateCmdMsg yaw_cmd;
-void yaw_cmd_cb(const small_object::YawRateCmdMsg::ConstPtr& msg){
+object_avoidance_cpp::YawRateCmdMsg yaw_cmd;
+void yaw_cmd_cb(const object_avoidance_cpp::YawRateCmdMsg::ConstPtr& msg){
     yaw_cmd = *msg;
+ //   ROS_INFO_THROTTLE(2,"Yaw cmd received.");
 }
 
 
@@ -86,8 +87,8 @@ int main(int argc, char **argv)
             ("mavros/local_position/pose", 10, pose_cb);
     ros::Subscriber RC_in_sub = nh.subscribe<mavros_msgs::RCIn>
             ("/mavros/rc/in", 10, RCin_cb);
-    ros::Subscriber yaw_cmd_sub = nh.subscribe<small_object::YawRateCmdMsg>
-            ("/controller_out/yaw_rate_cmd", 10, yaw_cmd_cb);
+    ros::Subscriber yaw_cmd_sub = nh.subscribe<object_avoidance_cpp::YawRateCmdMsg>
+            ("/yaw_cmd", 10, yaw_cmd_cb);
 
     // Publishers
     ros::Publisher local_pos_pub = nh.advertise<geometry_msgs::PoseStamped>
@@ -154,7 +155,7 @@ int main(int argc, char **argv)
         // and orientation are achieved. Control is then transitioned to
         // position hold in offboard mode, followed by velocity control
         // which incorproates the yaw rate commands created by OF_controller.py
-
+        ROS_INFO_THROTTLE(1,"Yaw cmd: %f", yaw_cmd.yaw_rate_cmd);
         // Wait for system to arm, provide some feedback to the screen
         if (!current_state.armed){
 	    ROS_INFO_THROTTLE(1,"Waiting for arm...");
@@ -164,23 +165,23 @@ int main(int argc, char **argv)
         
         // This loop initializes the position / orientation tracking
         // and sets the setpoint mode to pose.
-//        if(arm_switch && current_state.mode == "STABILIZED"){
-//            ROS_INFO_THROTTLE(2, "System is Armed and in Stabilized Flight Mode");
-//            setpoint_pose = true;
-//            forward_pose = current_pose;
-//            pose.header.stamp = ros::Time::now();
-//            pose.pose.position.x = forward_pose.pose.position.x;
-//            pose.pose.position.y = forward_pose.pose.position.y;
-//            pose.pose.position.z = forward_pose.pose.position.z;
-//    
-//            pose.pose.orientation.x = forward_pose.pose.orientation.x;
-//            pose.pose.orientation.y = forward_pose.pose.orientation.y;
-//            pose.pose.orientation.z = forward_pose.pose.orientation.z;
-//            pose.pose.orientation.w = forward_pose.pose.orientation.w;
-//        }
-
+        if(arm_switch && (current_state.mode == "STABILIZED" || current_state.mode == "POSITION")){
+            ROS_INFO_THROTTLE(2, "System is Armed and in Stabilized Flight Mode");
+            setpoint_pose = true;
+            forward_pose = current_pose;
+            pose.header.stamp = ros::Time::now();
+            pose.pose.position.x = forward_pose.pose.position.x;
+            pose.pose.position.y = forward_pose.pose.position.y;
+            pose.pose.position.z = forward_pose.pose.position.z;
+    
+            pose.pose.orientation.x = forward_pose.pose.orientation.x;
+            pose.pose.orientation.y = forward_pose.pose.orientation.y;
+            pose.pose.orientation.z = forward_pose.pose.orientation.z;
+            pose.pose.orientation.w = forward_pose.pose.orientation.w;
+        }
+//        ROS_INFO_THROTTLE(1, "%d", Arr[4]);
         // Check D-Switch Value for internal mode switching
-        if(Arr[5] < 1500 || safety_alt){
+        if(Arr[4] < 1500 || safety_alt){
             ROS_INFO_THROTTLE(10,"DSwitch is down.");
             Dswitch = false;
             yaw_switch1 = false;
@@ -189,7 +190,7 @@ int main(int argc, char **argv)
             if (!get_pose_switch){
             	get_pose = false;
             }
-        } else if (Arr[5] >= 1500){
+        } else if (Arr[4] >= 1500){
             Dswitch = true;
             ROS_INFO_THROTTLE(10,"Dswitch is up.");
 	    Dswitch_msg.dswitch = 1;
@@ -200,17 +201,9 @@ int main(int argc, char **argv)
         if(current_state.mode == "OFFBOARD" && !Dswitch){
             ROS_INFO_THROTTLE(2, "System is Armed and in OFFBOARD Mode: Position Hold.");
             if (!get_pose){
-                setpoint_pose = true;
-                pose = current_pose;
+               setpoint_pose = true;
+               forward_pose = current_pose;
                 
-               // pose.pose.position.x = -1.27;
-               // pose.pose.position.y = 1.0;
-               // pose.pose.position.z = 1.1;
-
-               // pose.pose.orientation.x = 0.0;
-               // pose.pose.orientation.y = 0.0;
-               // pose.pose.orientation.z = 0.0;
-               // pose.pose.orientation.w = -1.0;
                 if (!get_pose_switch){
                     get_pose = true;
                     get_pose_switch = true;
@@ -235,7 +228,6 @@ int main(int argc, char **argv)
            velocity.twist.linear.y = v*sin(forward_yaw_angle);
            velocity.twist.linear.z = 0.0;
 
-
            velocity.twist.angular.x = 0.0;
            velocity.twist.angular.y = 0.0;
            velocity.twist.angular.z = 0.0;
@@ -246,8 +238,9 @@ int main(int argc, char **argv)
 
         // Once we are moving forward, start taking yaw commands
         if (yaw_switch2){
-
+                
            velocity.twist.angular.z = yaw_cmd.yaw_rate_cmd;
+           //velocity.twist.angular.z = 0.5;
            velocity.twist.linear.x = v*cos(yaw_angle_msg.yaw_angle);
            velocity.twist.linear.y = v*sin(yaw_angle_msg.yaw_angle);
            velocity.twist.linear.z = 0.0;

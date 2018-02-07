@@ -18,8 +18,8 @@
 #include <flight_code/DSwitchMsg.h>
 #include <flight_code/FOFAllDataOutMsg.h>
 #include <flight_code/AllDataOutMsg.h>
-#include <small_object/OpticFlowMsg.h>
-#include <small_object/FOF_and_ResidualMsg.h>
+#include <object_avoidance/OpticFlowMsg.h>
+#include <object_avoidance/FOF_and_ResidualMsg.h>
 #include <Eigen/Geometry>
 #include <math.h>
 
@@ -60,8 +60,8 @@ void cmd_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
 }
 
 // Optic Flow Callback
-small_object::OpticFlowMsg OF_data;
-void OF_cb(const small_object::OpticFlowMsg::ConstPtr& msg){
+object_avoidance::OpticFlowMsg OF_data;
+void OF_cb(const object_avoidance::OpticFlowMsg::ConstPtr& msg){
      OF_data = *msg;
 }
 
@@ -72,8 +72,8 @@ void dswitch_cb(const flight_code::DSwitchMsg::ConstPtr& msg){
 }
 
 // FOF callback
-small_object::FOF_and_ResidualMsg FOF_data_in;
-void FOF_cb(const small_object::FOF_and_ResidualMsg::ConstPtr& msg){
+object_avoidance::FOF_and_ResidualMsg FOF_data_in;
+void FOF_cb(const object_avoidance::FOF_and_ResidualMsg::ConstPtr& msg){
     FOF_data_in = *msg;
 }
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
             ("/mavros/setpoint_velocity/cmd_vel", 10, cmd_vel_cb);
     ros::Subscriber dswitch_sub = nh.subscribe<flight_code::DSwitchMsg>
             ("/dswitch", 10, dswitch_cb);
-    ros::Subscriber FOF_sub = nh.subscribe<small_object::FOF_and_ResidualMsg>
+    ros::Subscriber FOF_sub = nh.subscribe<object_avoidance::FOF_and_ResidualMsg>
             ("/FOF_data", 10, FOF_cb);
     
     // Publishers

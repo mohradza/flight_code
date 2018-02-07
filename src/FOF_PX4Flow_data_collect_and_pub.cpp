@@ -14,12 +14,12 @@
 #include <mavros_msgs/SetMode.h>
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/RCIn.h>
-#include <flight_code/YawRateCmdMsg.h>
+#include <object_avoidance/YawRateCmdMsg.h>
 #include <flight_code/DSwitchMsg.h>
 #include <flight_code/FOFAllDataOutMsg.h>
 #include <flight_code/AllDataOutMsg.h>
-#include <small_object/OpticFlowMsg.h>
-#include <small_object/FOF_and_ResidualMsg.h>
+#include <object_avoidance/OpticFlowMsg.h>
+#include <object_avoidance/FOF_and_ResidualMsg.h>
 #include <Eigen/Geometry>
 #include <math.h>
 
@@ -60,8 +60,8 @@ void cmd_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
 }
 
 // Optic Flow Callback
-small_object::OpticFlowMsg OF_data;
-void OF_cb(const small_object::OpticFlowMsg::ConstPtr& msg){
+object_avoidance::OpticFlowMsg OF_data;
+void OF_cb(const object_avoidance::OpticFlowMsg::ConstPtr& msg){
      OF_data = *msg;
 }
 
@@ -72,8 +72,8 @@ void dswitch_cb(const flight_code::DSwitchMsg::ConstPtr& msg){
 }
 
 // FOF callback
-small_object::FOF_and_ResidualMsg FOF_data_in;
-void FOF_cb(const small_object::FOF_and_ResidualMsg::ConstPtr& msg){
+object_avoidance::FOF_and_ResidualMsg FOF_data_in;
+void FOF_cb(const object_avoidance::FOF_and_ResidualMsg::ConstPtr& msg){
     FOF_data_in = *msg;
 }
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     ros::Subscriber RC_in_sub = nh.subscribe<mavros_msgs::RCIn>
             ("/mavros/rc/in", 10, RCin_cb);
     ros::Subscriber vicon_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>
-            ("/mavros/mocap/pose", 10, vicon_pose_cb);
+            ("/vrpn_client_node/ohrad_quad/pose", 10, vicon_pose_cb);
     ros::Subscriber vicon_vel_sub = nh.subscribe<geometry_msgs::TwistStamped>
             ("/vrpn_client_node/ohrad_quad/twist", 10, vicon_vel_cb);
     ros::Subscriber vicon_accel_sub = nh.subscribe<geometry_msgs::TwistStamped>
@@ -96,16 +96,14 @@ int main(int argc, char **argv)
             ("/mavros/setpoint_velocity/cmd_vel", 10, cmd_vel_cb);
     ros::Subscriber dswitch_sub = nh.subscribe<flight_code::DSwitchMsg>
             ("/dswitch", 10, dswitch_cb);
-    ros::Subscriber FOF_sub = nh.subscribe<small_object::FOF_and_ResidualMsg>
+    ros::Subscriber FOF_sub = nh.subscribe<object_avoidance::FOF_and_ResidualMsg>
             ("/FOF_data", 10, FOF_cb);
     
     // Publishers
     ros::Publisher full_data_pub = nh.advertise<flight_code::FOFAllDataOutMsg>
             ("FOFAllDataOut", 10);
     
-    
-    //the setpoint publishing rate MUST be faster than 2Hz
-    ros::Rate rate(20.0);
+    ros::Rate rate(60.0);
 
     // Start timer and choose initial setpoint type
     ros::Time last_request = ros::Time::now();
@@ -141,7 +139,7 @@ int main(int argc, char **argv)
         full_msg.vicon_accel_x = vicon_accel.twist.linear.x;
         full_msg.vicon_accel_y = vicon_accel.twist.linear.y;
         full_msg.vicon_accel_z = vicon_accel.twist.linear.z;
-
+        full_msg.threshold = FOF_data_in.FOF_threshold;
         full_msg.dswitch = dswitch.dswitch;
 
         full_data_pub.publish(full_msg);

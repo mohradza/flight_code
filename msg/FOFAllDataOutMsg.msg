@@ -23,6 +23,7 @@ float32 vicon_accel_x
 float32 vicon_accel_y
 float32 vicon_accel_z
 
+float32 threshold
 int16 dswitch
 
 

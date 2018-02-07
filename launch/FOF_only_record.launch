@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="rosbag" type="record" name="rosbag_FOF_data"
+        args=" -O /tmp/FOF_data_all  /FOF_data" />
+
+</launch>
